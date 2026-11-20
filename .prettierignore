@@ -1,0 +1,8 @@
+dist
+node_modules
+.turbo
+pnpm-lock.yaml
+**/src/generated/**
+bench/apps/*/source/**
+docs/*.pdf
+bench/test/fixtures/apps/*/source/**

@@ -1,0 +1,161 @@
+id: 01-teamtodo
+name: TeamTodo (SaaS todo app with teams and admin roles)
+stack: { language: typescript, framework: express, frontend: vanilla-js, db: postgres }
+provenance:
+  generator: claude-code
+  model: claude-opus-5-5
+  generated_on: 2026-11-17
+  prompt: prompt.md
+  clean_commit: null
+  notes: >
+    Reference app, written in one pass with the vulnerabilities seeded during generation, so
+    there is no clean commit. Apps 02-10 follow the full protocol in bench/README.md
+    (generate clean, commit, seed as a separate commit).
+source_dir: source
+vulnerabilities:
+  - id: V01
+    class: sqli
+    cwe: CWE-89
+    file: src/routes/todos.ts
+    lines: [14, 20]
+    snippet: "ILIKE '%${q}%'"
+    endpoint: "GET /api/todos/search"
+    detectable_by: [static, dynamic]
+    description: Search term is interpolated into the SQL string instead of passed as a parameter.
+
+  - id: V02
+    class: bola
+    cwe: CWE-639
+    file: src/routes/todos.ts
+    lines: [32, 36]
+    snippet: 'SELECT * FROM todos WHERE id = $1"'
+    endpoint: "GET /api/todos/:id"
+    detectable_by: [dynamic]
+    description: Fetching a todo by id does not check team_id, so any user can read other teams' todos.
+
+  - id: V03
+    class: bfla
+    cwe: CWE-285
+    file: src/routes/admin.ts
+    lines: [12, 17]
+    snippet: 'adminRouter.delete("/users/:id", async'
+    endpoint: "DELETE /api/admin/users/:id"
+    detectable_by: [dynamic, static]
+    description: Deleting a user is missing requireAdmin; any logged-in user can delete any account.
+
+  - id: V04
+    class: jwt-misconfig
+    cwe: CWE-1391
+    file: src/config.ts
+    lines: [5, 5]
+    snippet: 'JWT_SECRET = "secret123"'
+    endpoint: null
+    detectable_by: [static, dynamic]
+    description: >
+      JWT signing secret is a hardcoded dictionary word and ignores the environment. A 10k
+      wordlist brute force recovers it, allowing forged admin tokens.
+
+  - id: V05
+    class: mass-assignment
+    cwe: CWE-915
+    file: src/routes/users.ts
+    lines: [15, 27]
+    snippet: "{ ...req.body }"
+    endpoint: "PATCH /api/users/me"
+    detectable_by: [dynamic, static]
+    description: Profile update writes every body field to the users row, so a user can set role=admin or change team_id.
+
+  - id: V06
+    class: missing-rate-limit
+    cwe: CWE-307
+    file: src/auth.ts
+    lines: [59, 67]
+    snippet: 'authRouter.post("/login"'
+    endpoint: "POST /api/auth/login"
+    detectable_by: [dynamic]
+    description: No rate limiting or lockout on login; unlimited password guessing.
+
+  - id: V07
+    class: cors-misconfig
+    cwe: CWE-942
+    file: src/index.ts
+    lines: [13, 13]
+    snippet: "cors({ origin: true, credentials: true })"
+    endpoint: null
+    detectable_by: [static, dynamic]
+    description: CORS reflects any Origin and allows credentials.
+
+  - id: V08
+    class: verbose-errors
+    cwe: CWE-209
+    file: src/index.ts
+    lines: [25, 28]
+    snippet: "stack: err.stack"
+    endpoint: null
+    detectable_by: [static, dynamic]
+    description: The error handler returns the stack trace to the client.
+
+  - id: V09
+    class: hardcoded-secret
+    cwe: CWE-798
+    file: src/config.ts
+    lines: [11, 11]
+    snippet: 'METRICS_API_TOKEN = "tt_live_'
+    endpoint: null
+    detectable_by: [static]
+    description: Live-looking API token committed in source.
+
+  - id: V10
+    class: stored-xss
+    cwe: CWE-79
+    file: public/app.js
+    lines: [30, 32]
+    snippet: "${c.body}"
+    endpoint: "POST /api/todos/:id/comments"
+    detectable_by: [static, dynamic]
+    description: Comment bodies are stored unsanitised and rendered with innerHTML.
+
+  - id: V11
+    class: path-traversal
+    cwe: CWE-22
+    file: src/routes/files.ts
+    lines: [18, 26]
+    snippet: "path.join(UPLOAD_DIR, String(req.user!.teamId), file)"
+    endpoint: "GET /api/files"
+    detectable_by: [static, dynamic]
+    description: The file query parameter is joined unchecked, so ../ reads any file the process can read.
+
+  - id: V12
+    class: ssrf
+    cwe: CWE-918
+    file: src/routes/todos.ts
+    lines: [80, 92]
+    snippet: "await fetch(url)"
+    endpoint: "POST /api/todos/:id/link"
+    detectable_by: [static, dynamic]
+    description: Link preview fetches any user-supplied URL server-side and returns the first 500 bytes.
+
+  - id: V13
+    class: vulnerable-dependency
+    cwe: CWE-1395
+    file: package.json
+    lines: [14, 14]
+    snippet: '"lodash": "4.17.15"'
+    endpoint: null
+    detectable_by: [static]
+    description: >
+      lodash 4.17.15 has prototype pollution in _.merge (CVE-2020-8203), reachable through
+      PUT /api/users/me/settings.
+
+known_extras:
+  - cwe: CWE-204
+    file: src/auth.ts
+    endpoint: "POST /api/auth/login"
+    note: Login returns different errors for unknown email and wrong password (user enumeration).
+  - cwe: CWE-798
+    file: src/config.ts
+    note: The hardcoded JWT secret (V04) is also a hardcoded secret.
+  - cwe: CWE-1321
+    file: src/routes/users.ts
+    endpoint: "PUT /api/users/me/settings"
+    note: Prototype pollution via _.merge on request body (the reachable sink of V13).

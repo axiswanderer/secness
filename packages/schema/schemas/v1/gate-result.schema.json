@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/gate-result.schema.json",
+  "title": "GateResult",
+  "description": "The pass/fail decision for a run. A gate passing means a defined bar was met on the listed coverage, never 'zero vulnerabilities'.",
+  "type": "object",
+  "required": ["policy", "passed", "blocking", "counts", "coverage", "score"],
+  "properties": {
+    "policy": { "type": "string", "pattern": "^[a-z0-9-]+@[0-9]+$", "examples": ["default@1"] },
+    "passed": { "type": "boolean" },
+    "blocking": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/FindingId" } },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Human-readable reasons the gate failed that are not findings, e.g. 'app could not start'."
+    },
+    "counts": {
+      "title": "GateCounts",
+      "type": "object",
+      "required": ["critical", "high", "medium", "low", "info", "accepted"],
+      "properties": {
+        "critical": { "type": "integer", "minimum": 0 },
+        "high": { "type": "integer", "minimum": 0 },
+        "medium": { "type": "integer", "minimum": 0 },
+        "low": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 },
+        "accepted": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "coverage": {
+      "title": "GateCoverage",
+      "type": "object",
+      "required": ["routes_tested", "routes_total", "suites"],
+      "properties": {
+        "routes_tested": { "type": "integer", "minimum": 0 },
+        "routes_total": { "type": "integer", "minimum": 0 },
+        "suites": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "score": { "type": "integer", "minimum": 0, "maximum": 100 }
+  }
+}

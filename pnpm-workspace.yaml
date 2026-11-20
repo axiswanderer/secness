@@ -1,0 +1,16 @@
+packages:
+  - apps/*
+  - packages/*
+  - packages/engines/*
+  - bench
+
+# Supply-chain hygiene for a security product: never install a dependency
+# version published less than 14 days ago (value is in minutes).
+# Install scripts are denied unless listed true here. Keep this list short.
+allowBuilds:
+  esbuild: true
+  cpu-features: false
+  ssh2: false
+  protobufjs: false
+
+minimumReleaseAge: 20160

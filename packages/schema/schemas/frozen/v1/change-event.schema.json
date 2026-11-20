@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/change-event.schema.json",
+  "title": "ChangeEvent",
+  "description": "Emitted by a harness adapter (C1) when a coding agent finishes a change.",
+  "type": "object",
+  "required": [
+    "id",
+    "source",
+    "trigger",
+    "repo_root",
+    "base_ref",
+    "head_ref",
+    "changed_files",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/ChangeEventId" },
+    "source": {
+      "type": "string",
+      "enum": ["claude-code", "codex", "cursor", "git-hook", "ci", "manual"]
+    },
+    "trigger": { "type": "string", "enum": ["agent_turn_end", "commit", "build", "manual"] },
+    "repo_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path of the repository root."
+    },
+    "base_ref": {
+      "type": ["string", "null"],
+      "description": "Git sha or snapshot id the change is measured from. null on the first run of a repo."
+    },
+    "head_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Git sha or working-tree snapshot id."
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "title": "ChangedFile",
+        "description": "old_path is set when status is renamed.",
+        "type": "object",
+        "required": ["path", "status"],
+        "properties": {
+          "path": { "$ref": "common.schema.json#/$defs/RepoPath" },
+          "status": { "type": "string", "enum": ["added", "modified", "deleted", "renamed"] },
+          "old_path": { "$ref": "common.schema.json#/$defs/RepoPath" }
+        }
+      }
+    },
+    "session_ref": {
+      "type": ["string", "null"],
+      "description": "Harness session id, used to route findings back to the right agent session."
+    },
+    "created_at": { "$ref": "common.schema.json#/$defs/Timestamp" }
+  }
+}

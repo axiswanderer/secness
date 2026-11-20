@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/verdict.schema.json",
+  "title": "Verdict",
+  "description": "Result of replaying one finding against patched code (secness_verify).",
+  "type": "object",
+  "required": ["finding_id", "run_id", "verdict", "reason", "checked_at"],
+  "properties": {
+    "finding_id": { "$ref": "common.schema.json#/$defs/FindingId" },
+    "run_id": { "$ref": "common.schema.json#/$defs/RunId" },
+    "verdict": {
+      "type": "string",
+      "enum": ["fixed", "not_fixed", "regressed", "inconclusive"],
+      "description": "fixed: attack fails and app is healthy. regressed: the fix broke the route (5xx or health failure)."
+    },
+    "reason": { "type": "string" },
+    "replay_response_excerpt": { "type": ["string", "null"] },
+    "checked_at": { "$ref": "common.schema.json#/$defs/Timestamp" }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/run.schema.json",
+  "title": "Run",
+  "description": "One execution of the SecNess loop.",
+  "type": "object",
+  "required": [
+    "id",
+    "change_event_id",
+    "mode",
+    "state",
+    "timings",
+    "finding_ids",
+    "gate_result",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/RunId" },
+    "change_event_id": {
+      "oneOf": [{ "$ref": "common.schema.json#/$defs/ChangeEventId" }, { "type": "null" }],
+      "description": "null for scheduled or manual full runs with no triggering change."
+    },
+    "mode": { "$ref": "common.schema.json#/$defs/RunMode" },
+    "state": { "$ref": "#/$defs/RunState" },
+    "timings": {
+      "type": "array",
+      "description": "One entry per state entered, in order.",
+      "items": {
+        "title": "StateTiming",
+        "type": "object",
+        "required": ["state", "started_at", "ended_at"],
+        "properties": {
+          "state": { "$ref": "#/$defs/RunState" },
+          "started_at": { "$ref": "common.schema.json#/$defs/Timestamp" },
+          "ended_at": {
+            "oneOf": [{ "$ref": "common.schema.json#/$defs/Timestamp" }, { "type": "null" }]
+          }
+        }
+      }
+    },
+    "finding_ids": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/FindingId" } },
+    "gate_result": { "oneOf": [{ "$ref": "gate-result.schema.json" }, { "type": "null" }] },
+    "error": {
+      "oneOf": [
+        {
+          "title": "RunError",
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "examples": ["could_not_start", "timeout", "spend_cap_exceeded", "internal"]
+            },
+            "message": { "type": "string" }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "llm_calls": {
+      "type": "array",
+      "description": "Every LLM call made during the run (section 0.4).",
+      "items": { "$ref": "#/$defs/LlmCallRecord" }
+    },
+    "created_at": { "$ref": "common.schema.json#/$defs/Timestamp" }
+  },
+  "$defs": {
+    "RunState": {
+      "title": "RunState",
+      "type": "string",
+      "enum": [
+        "queued",
+        "profiling",
+        "building",
+        "scanning",
+        "validating",
+        "reporting",
+        "done",
+        "failed"
+      ]
+    },
+    "LlmCallRecord": {
+      "title": "LlmCallRecord",
+      "type": "object",
+      "required": [
+        "provider",
+        "model",
+        "input_tokens",
+        "output_tokens",
+        "cost_usd",
+        "latency_ms",
+        "at"
+      ],
+      "properties": {
+        "provider": { "type": "string", "examples": ["anthropic", "openai"] },
+        "model": { "type": "string" },
+        "purpose": {
+          "type": "string",
+          "description": "What the call was for, e.g. 'feedback-composer'."
+        },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "cache_read_tokens": { "type": "integer", "minimum": 0 },
+        "cost_usd": { "type": "number", "minimum": 0 },
+        "latency_ms": { "type": "integer", "minimum": 0 },
+        "at": { "$ref": "common.schema.json#/$defs/Timestamp" }
+      }
+    }
+  }
+}

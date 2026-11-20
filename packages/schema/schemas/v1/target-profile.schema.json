@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/target-profile.schema.json",
+  "title": "TargetProfile",
+  "description": "Produced by the target profiler (C4). Cached per repo; refreshed when build or route files change.",
+  "type": "object",
+  "required": ["stack", "build", "services", "env", "api_surface", "auth", "seed"],
+  "properties": {
+    "generated_at": { "$ref": "common.schema.json#/$defs/Timestamp" },
+    "inputs_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Hash of the build and route files the profile was derived from. A mismatch means the cache is stale."
+    },
+    "stack": {
+      "title": "Stack",
+      "type": "object",
+      "required": ["language", "framework"],
+      "properties": {
+        "language": { "type": "string", "examples": ["typescript", "javascript", "python", "go"] },
+        "framework": {
+          "type": "string",
+          "examples": ["express", "fastify", "nextjs", "fastapi", "django"]
+        },
+        "frontend": { "type": ["string", "null"], "examples": ["react", null] },
+        "db": { "type": ["string", "null"], "examples": ["postgres", "mongodb", null] }
+      }
+    },
+    "build": {
+      "title": "BuildRecipe",
+      "type": "object",
+      "required": ["strategy", "file"],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["dockerfile", "compose", "buildpack", "generated"]
+        },
+        "file": { "oneOf": [{ "$ref": "common.schema.json#/$defs/RepoPath" }, { "type": "null" }] }
+      }
+    },
+    "services": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "title": "ServiceSpec",
+        "type": "object",
+        "required": ["name", "port"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,62}$" },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "health": {
+            "type": ["string", "null"],
+            "description": "Health check path, e.g. /health. null means probe / for any 2xx/4xx."
+          }
+        }
+      }
+    },
+    "env": {
+      "title": "EnvSpec",
+      "type": "object",
+      "required": ["required", "generated"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" }
+        },
+        "generated": {
+          "type": "boolean",
+          "description": "Always true in v1: sandbox env values are generated fakes, never read from the developer's .env."
+        }
+      }
+    },
+    "api_surface": {
+      "title": "ApiSurface",
+      "type": "object",
+      "required": ["openapi", "routes"],
+      "properties": {
+        "openapi": {
+          "oneOf": [{ "$ref": "common.schema.json#/$defs/RepoPath" }, { "type": "null" }]
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "title": "Route",
+            "type": "object",
+            "required": ["method", "path", "auth"],
+            "properties": {
+              "method": { "$ref": "common.schema.json#/$defs/HttpMethod" },
+              "path": { "type": "string", "pattern": "^/" },
+              "file": { "$ref": "common.schema.json#/$defs/RepoPath" },
+              "line": { "type": "integer", "minimum": 1 },
+              "auth": { "type": "string", "enum": ["bearer", "cookie", "none", "unknown"] },
+              "middleware": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "auth": {
+      "title": "AuthSpec",
+      "type": "object",
+      "required": ["type", "login", "roles"],
+      "properties": {
+        "type": { "type": "string", "enum": ["jwt", "session", "none", "unknown"] },
+        "login": { "oneOf": [{ "$ref": "#/$defs/RouteRef" }, { "type": "null" }] },
+        "register": { "oneOf": [{ "$ref": "#/$defs/RouteRef" }, { "type": "null" }] },
+        "roles": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "seed": {
+      "title": "SeedPlan",
+      "type": "object",
+      "required": ["users"],
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "title": "SeedUsers",
+            "type": "object",
+            "required": ["role", "count"],
+            "properties": {
+              "role": { "type": "string" },
+              "count": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "RouteRef": {
+      "title": "RouteRef",
+      "type": "object",
+      "required": ["method", "path"],
+      "properties": {
+        "method": { "$ref": "common.schema.json#/$defs/HttpMethod" },
+        "path": { "type": "string", "pattern": "^/" }
+      }
+    }
+  }
+}

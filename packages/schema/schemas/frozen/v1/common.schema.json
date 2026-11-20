@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/common.schema.json",
+  "title": "Common",
+  "description": "Shared definitions used by every SecNess v1 contract.",
+  "$defs": {
+    "Timestamp": {
+      "title": "Timestamp",
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp."
+    },
+    "ChangeEventId": {
+      "title": "ChangeEventId",
+      "type": "string",
+      "pattern": "^chg_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "RunId": { "title": "RunId", "type": "string", "pattern": "^run_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "FindingId": {
+      "title": "FindingId",
+      "type": "string",
+      "pattern": "^fnd_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "RepoPath": {
+      "title": "RepoPath",
+      "type": "string",
+      "minLength": 1,
+      "description": "Path relative to the repo root, '/'-separated. Never absolute, never escapes the root.",
+      "pattern": "^(?![/\\\\])(?![A-Za-z]:)(?!.*(^|/)\\.\\.(/|$)).+$"
+    },
+    "HttpMethod": {
+      "title": "HttpMethod",
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+    },
+    "Endpoint": {
+      "title": "Endpoint",
+      "type": "string",
+      "description": "'METHOD /path' with framework-style params, e.g. 'GET /api/users/:id/profile'.",
+      "pattern": "^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /\\S*$"
+    },
+    "RunMode": { "title": "RunMode", "type": "string", "enum": ["incremental", "full", "verify"] },
+    "SeverityLevel": {
+      "title": "SeverityLevel",
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "Confidence": {
+      "title": "Confidence",
+      "type": "string",
+      "enum": ["proven", "likely", "unverified"],
+      "description": "proven: reproduced by replay + oracle. likely: corroborated by a second signal. unverified: single unconfirmed signal."
+    }
+  }
+}

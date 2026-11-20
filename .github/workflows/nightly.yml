@@ -1,0 +1,33 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    name: SecNess Bench
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Validate ground truth and report Stage 0 coverage
+        run: pnpm bench:validate
+      # Stage 1: once `secness scan` exists, score it and fail on a >3 point drop:
+      # - run: pnpm bench -- --scanner "node apps/cli/dist/index.js scan --full --json --repo {repo}" --baseline bench/baseline.json --out bench/results/nightly.json
+      # - uses: actions/upload-artifact@v4
+      #   with: { name: bench-results, path: bench/results/ }
+
+  sandbox:
+    uses: ./.github/workflows/sandbox.yml

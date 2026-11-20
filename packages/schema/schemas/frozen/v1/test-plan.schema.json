@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/test-plan.schema.json",
+  "title": "TestPlan",
+  "description": "Produced by change intelligence (C3): which engines and suites run for a change.",
+  "type": "object",
+  "required": ["run_id", "mode", "static", "dynamic", "ai_agent", "timeout_s"],
+  "properties": {
+    "run_id": { "$ref": "common.schema.json#/$defs/RunId" },
+    "mode": { "$ref": "common.schema.json#/$defs/RunMode" },
+    "static": {
+      "type": "array",
+      "items": {
+        "title": "StaticTask",
+        "type": "object",
+        "required": ["engine", "paths"],
+        "properties": {
+          "engine": {
+            "type": "string",
+            "enum": ["semgrep", "gitleaks", "trivy", "osv-scanner", "trivy-config"]
+          },
+          "rulesets": { "type": "array", "items": { "type": "string" } },
+          "paths": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/RepoPath" },
+            "description": "Empty array means the whole tree (full mode)."
+          }
+        }
+      }
+    },
+    "dynamic": {
+      "type": "array",
+      "items": {
+        "title": "DynamicTask",
+        "type": "object",
+        "required": ["suite", "targets"],
+        "properties": {
+          "suite": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+            "examples": ["access-control.bola", "auth.jwt", "zap.api-scan"]
+          },
+          "targets": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/Endpoint" },
+            "description": "Empty array means every route in the profile."
+          }
+        }
+      }
+    },
+    "ai_agent": {
+      "title": "AiAgentTask",
+      "type": "object",
+      "required": ["enabled", "budget"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "budget": {
+          "title": "AiAgentBudget",
+          "type": "object",
+          "required": ["max_steps", "max_usd"],
+          "properties": {
+            "max_steps": { "type": "integer", "minimum": 0 },
+            "max_usd": { "type": "number", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "timeout_s": { "type": "integer", "minimum": 1 }
+  }
+}

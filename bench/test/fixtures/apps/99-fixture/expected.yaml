@@ -1,0 +1,24 @@
+id: 99-fixture
+name: Fixture
+stack: { language: typescript, framework: express }
+provenance: { generator: human, prompt: prompt.md }
+source_dir: source
+vulnerabilities:
+  - id: V01
+    class: sqli
+    cwe: CWE-89
+    file: src/app.ts
+    lines: [4, 4]
+    snippet: "WHERE id = ${req.params.id}"
+    endpoint: "GET /api/notes/:id"
+    detectable_by: [static, dynamic]
+    description: Raw SQL interpolation of the id parameter.
+  - id: V02
+    class: bola
+    cwe: CWE-639
+    file: src/app.ts
+    lines: [3, 6]
+    snippet: "res.json(note)"
+    endpoint: "GET /api/notes/:id"
+    detectable_by: [dynamic]
+    description: No ownership check.

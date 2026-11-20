@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/bench/expected.schema.json",
+  "title": "BenchExpected",
+  "description": "Ground truth for one SecNess Bench app: every planted vulnerability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "stack", "provenance", "source_dir", "vulnerabilities"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[0-9]{2}-[a-z0-9-]+$" },
+    "name": { "type": "string" },
+    "stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["language", "framework"],
+      "properties": {
+        "language": { "type": "string" },
+        "framework": { "type": "string" },
+        "frontend": { "type": ["string", "null"] },
+        "db": { "type": ["string", "null"] }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generator", "prompt"],
+      "properties": {
+        "generator": {
+          "type": "string",
+          "enum": ["claude-code", "codex", "cursor", "human", "public"]
+        },
+        "model": { "type": ["string", "null"] },
+        "generated_on": { "type": ["string", "null"], "format": "date" },
+        "prompt": {
+          "type": "string",
+          "description": "Path to the generation prompt, relative to the app dir."
+        },
+        "clean_commit": {
+          "type": ["string", "null"],
+          "description": "Commit holding the app as generated, before seeding. The seeding diff is the ground truth."
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "source_dir": { "type": "string", "description": "App source, relative to the app dir." },
+    "vulnerabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "class",
+          "cwe",
+          "file",
+          "lines",
+          "snippet",
+          "detectable_by",
+          "description"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^V[0-9]{2}$" },
+          "class": {
+            "type": "string",
+            "enum": [
+              "sqli",
+              "nosqli",
+              "bola",
+              "bfla",
+              "jwt-misconfig",
+              "mass-assignment",
+              "ssrf",
+              "path-traversal",
+              "stored-xss",
+              "hardcoded-secret",
+              "vulnerable-dependency",
+              "missing-rate-limit",
+              "cors-misconfig",
+              "verbose-errors",
+              "business-logic"
+            ]
+          },
+          "cwe": { "type": "string", "pattern": "^CWE-[0-9]+$" },
+          "file": { "type": "string", "description": "Relative to source_dir." },
+          "lines": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "integer", "minimum": 1 },
+              { "type": "integer", "minimum": 1 }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "snippet": {
+            "type": "string",
+            "minLength": 4,
+            "description": "Exact text that must appear within `lines`. Keeps ground truth honest when files are edited."
+          },
+          "endpoint": {
+            "type": ["string", "null"],
+            "pattern": "^(GET|POST|PUT|PATCH|DELETE) /\\S*$"
+          },
+          "detectable_by": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "enum": ["static", "dynamic", "ai-agent"] }
+          },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "known_extras": {
+      "type": "array",
+      "description": "Real, unplanted vulnerabilities found later. Findings matching these count as true positives.",
+      "items": {
+        "type": "object",
+        "required": ["cwe", "file"],
+        "properties": {
+          "cwe": { "type": "string" },
+          "file": { "type": "string" },
+          "endpoint": { "type": ["string", "null"] },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>TeamTodo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>TeamTodo</h1>
+      <form id="login">
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="password" type="password" placeholder="Password" required />
+        <button>Log in</button>
+      </form>
+      <section id="app" hidden>
+        <form id="new-todo"><input name="title" placeholder="New todo" required /><button>Add</button></form>
+        <ul id="todos"></ul>
+        <section id="detail" hidden>
+          <h2 id="detail-title"></h2>
+          <ul id="comments"></ul>
+          <form id="new-comment"><input name="body" placeholder="Comment" required /><button>Post</button></form>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

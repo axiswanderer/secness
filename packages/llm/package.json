@@ -1,0 +1,29 @@
+{
+  "name": "@secness/llm",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Provider-agnostic LLM interface",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
+    "@secness/schema": "workspace:*",
+    "ajv": "^8.20.0",
+    "openai": "^7.47.0"
+  }
+}

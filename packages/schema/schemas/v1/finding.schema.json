@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.secness.dev/v1/finding.schema.json",
+  "title": "Finding",
+  "description": "A security finding. This is what the coding agent receives. Only C10 verification may set status to verified_fixed.",
+  "type": "object",
+  "required": [
+    "id",
+    "fingerprint",
+    "status",
+    "title",
+    "class",
+    "severity",
+    "confidence",
+    "location",
+    "evidence",
+    "reproduction",
+    "remediation",
+    "detected_by",
+    "first_seen_run",
+    "last_seen_run"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/FindingId" },
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "sha256(rule + normalized location + sink). Stable across runs and tools; the dedupe key."
+    },
+    "status": {
+      "$ref": "#/$defs/FindingStatus"
+    },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "class": {
+      "title": "FindingClass",
+      "type": "object",
+      "required": ["cwe"],
+      "properties": {
+        "cwe": { "type": "string", "pattern": "^CWE-[0-9]+$" },
+        "owasp": { "type": ["string", "null"], "examples": ["API1:2023", "A03:2021"] }
+      }
+    },
+    "severity": {
+      "title": "Severity",
+      "type": "object",
+      "required": ["level", "rationale"],
+      "properties": {
+        "level": { "$ref": "common.schema.json#/$defs/SeverityLevel" },
+        "cvss": { "type": ["number", "null"], "minimum": 0, "maximum": 10 },
+        "rationale": { "type": "string" }
+      }
+    },
+    "confidence": { "$ref": "common.schema.json#/$defs/Confidence" },
+    "location": {
+      "title": "FindingLocation",
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": { "$ref": "common.schema.json#/$defs/RepoPath" },
+        "line_start": { "type": ["integer", "null"], "minimum": 1 },
+        "line_end": { "type": ["integer", "null"], "minimum": 1 },
+        "endpoint": {
+          "oneOf": [{ "$ref": "common.schema.json#/$defs/Endpoint" }, { "type": "null" }]
+        }
+      }
+    },
+    "evidence": {
+      "title": "Evidence",
+      "type": "object",
+      "description": "Dynamic findings carry request/response/replay. Static-only findings may have none, and are then at most 'likely'.",
+      "properties": {
+        "request": {
+          "type": ["string", "null"],
+          "description": "Raw HTTP request, secrets redacted."
+        },
+        "response_excerpt": {
+          "type": ["string", "null"],
+          "description": "Redacted raw HTTP response excerpt."
+        },
+        "replay": {
+          "type": ["string", "null"],
+          "description": "Evidence-store path to the replay script (.http)."
+        },
+        "logs": { "type": ["string", "null"], "description": "Evidence-store path to app logs." },
+        "snippet": {
+          "type": ["string", "null"],
+          "description": "Source excerpt for static findings."
+        }
+      }
+    },
+    "reproduction": { "type": "array", "items": { "type": "string" } },
+    "remediation": {
+      "title": "Remediation",
+      "type": "object",
+      "required": ["summary"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1 },
+        "patch_hint": {
+          "type": ["string", "null"],
+          "description": "Optional unified diff, verified in a throwaway sandbox (Stage 2+)."
+        },
+        "references": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "regression_test": {
+      "oneOf": [
+        {
+          "title": "RegressionTest",
+          "type": "object",
+          "required": ["framework", "code"],
+          "properties": {
+            "framework": { "type": "string", "examples": ["jest+supertest", "vitest", "pytest"] },
+            "code": { "type": "string" }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "detected_by": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)*$" },
+      "examples": [["dynamic.access-control.bola", "static.semgrep.secness-express-raw-sql"]]
+    },
+    "first_seen_run": { "$ref": "common.schema.json#/$defs/RunId" },
+    "last_seen_run": { "$ref": "common.schema.json#/$defs/RunId" },
+    "dismissal": {
+      "oneOf": [
+        {
+          "title": "Dismissal",
+          "type": "object",
+          "required": ["reason", "by", "at"],
+          "description": "Set only by a human via a signed CLI token (secness_dismiss). Never by an agent.",
+          "properties": {
+            "reason": { "type": "string", "minLength": 1 },
+            "by": { "type": "string" },
+            "at": { "$ref": "common.schema.json#/$defs/Timestamp" },
+            "expires_at": {
+              "oneOf": [{ "$ref": "common.schema.json#/$defs/Timestamp" }, { "type": "null" }]
+            }
+          }
+        },
+        { "type": "null" }
+      ]
+    }
+  },
+  "$defs": {
+    "FindingStatus": {
+      "title": "FindingStatus",
+      "type": "string",
+      "enum": [
+        "candidate",
+        "confirmed",
+        "sent",
+        "fix_proposed",
+        "verified_fixed",
+        "reopened",
+        "accepted_risk",
+        "false_positive"
+      ]
+    }
+  }
+}

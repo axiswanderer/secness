@@ -1,0 +1,19 @@
+{
+  "name": "@secness/bench",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SecNess Bench: vulnerable target apps + scoring",
+  "type": "module",
+  "scripts": {
+    "validate": "tsx run.ts validate",
+    "bench": "tsx run.ts run",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@secness/schema": "workspace:*",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.9.1"
+  }
+}
